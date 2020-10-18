@@ -115,16 +115,23 @@ class Mesh3D
 	end
 
 	# project the dots coordinates to a 2d plane at z=1, camera points to [0, 0, 0]
-	# projected image covers height from y=-1 to y=+1, x range varies with aspect ratio
-	# returns a new Mesh3D with all points having z=0
-	def project(aspect_ratio=4.0/3, camera_pos=[0.0, 0.0, 2.0])
-		# TODO
-		dup(@dots.map { |d| d })
+	# projected image covers height from y=-1 to y=+1
+	# returns a new Mesh3D with all points having z=screen_z
+	def project(camera_z=3.0, screen_z=1.0)
+		dup(@dots.map { |d|
+			if d.z >= camera_z
+				# TODO clipping ? need to work on lines
+				Point3D.new(0, 0, camera_z)
+			else
+				r = (camera_z-screen_z)/(camera_z-d.z)
+				Point3D.new(r*d.x, r*d.y, camera_z)
+			end
+		})
 	end
 
 	# project and convert dot coordinates to screen coords (revert y axis, scale coords from 0 to size)
-	def to_screen(size, camera_pos=[0.0, 0.0, 2.0])
-		project(size[0].to_f/size[1], camera_pos).scale(size[1]/2.0).mirror_y.translate([size[0]/2.0, size[1]/2.0, 0.0])
+	def to_screen(size, *project_args)
+		project(*project_args).scale(size[1]/2.0).mirror_y.translate([size[0]/2.0, size[1]/2.0, 0.0])
 	end
 
 	def self.cube(attr={})
