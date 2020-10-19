@@ -172,8 +172,34 @@ class Mesh3D
 	# clip dots with z > max_z
 	# split lines crossing max_z
 	def clip_z(max_z=-0.1)
-		# TODO split lines
-		dup(@dots.map { |d| d.clip_z(max_z) if d })
+		# filter dots
+		dots = @dots.map { |d| d.clip_z(max_z) if d }
+
+		# find the intersection of the line with the clip plane
+		# append it to dots
+		# return the new dot idx
+		new_dot = lambda { |d1, d2|
+			r = (max_z - d2.z) / (d1.z - d2.z)
+			x = d2.x + (d1.x - d2.x) * r
+			y = d2.y + (d1.y - d2.y) * r
+			dots << Point3D.new(x, y, max_z)
+			dots.length-1
+		}
+
+		# split lines
+		lines_idx = @lines_idx.map { |i1, i2|
+			next if not dots[i1] and not dots[i2]
+			if not dots[i1]
+				next if not @dots[i1]
+				i1 = new_dot[@dots[i1], dots[i2]]
+			elsif not dots[i2]
+				next if not @dots[i2]
+				i2 = new_dot[dots[i1], @dots[i2]]
+			end
+			[i1, i2]
+		}.compact
+
+		dup(dots, lines_idx)
 	end
 
 	# project the dots coordinates to a 2d plane at z=screen_z, camera sitting at [0, 0, 0] pointing to [0, 0, -1]

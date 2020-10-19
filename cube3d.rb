@@ -45,7 +45,7 @@ class Cube3DWindow < Gosu::Window
 
 	def handle_keys
 		cur_ts = cur_mx = cur_my = nil
-		@keys.dup.each { |k, (ts, mx, my)|
+		@keys.dup.each { |k, (ts, _mx, _my)|
 			cur_ts ||= Gosu.milliseconds
 			cur_mx ||= mouse_x
 			cur_my ||= mouse_y
@@ -85,7 +85,7 @@ class Cube3DWindow < Gosu::Window
 				@cam = Camera3D.new
 
 			else
-				id_to_name = Gosu.constants.find { |k| Gosu.const_get(k) == id }
+				id_to_name = Gosu.constants.find { |_k| Gosu.const_get(_k) == k }
 				puts "unk key #{id_to_name || k}"
 
 				@keys.delete(k)
