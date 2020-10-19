@@ -96,7 +96,11 @@ class Point3D
 	end
 
 	def *(fact)
-		scale([fact, fact, fact])
+		scale([fact]*3)
+	end
+
+	def /(fact)
+		scale([1.0/fact]*3)
 	end
 
 	def dot(other)
@@ -108,6 +112,11 @@ class Point3D
 		other = other.to_a
 		ox, oy, oz = other[0].to_f, other[1].to_f, other[2].to_f
 		Point3D.new(@y*oz-@z*oy, @z*ox-@x*oz, @x*oy-@y*ox)
+	end
+
+	def dist(other=[0.0, 0.0, 0.0])
+		delta = self - other
+		Math.sqrt(delta.dot(delta))
 	end
 
 	def to_s
@@ -228,11 +237,36 @@ class Mesh3D
 	def self.line(p_end, attr={})
 		new(attr, [Point3D.new(0, 0, 0), p_end], [[0, 1]])
 	end
+
+	def self.sphere(attr={}, npoints=16, n_neigh=8)
+		dots = []
+		npoints.times { |i|
+			i += 0.5
+			y = Math.cos(Math::PI*i/npoints)
+			radius = Math.sin(Math::PI*i/npoints)
+			ncirc = (2.0*npoints*radius).ceil
+			ncirc.times { |j|
+				dots << Point3D.new(radius*Math.cos(2*Math::PI*j/ncirc), y, radius*Math.sin(2*Math::PI*j/ncirc))
+			}
+		}
+
+		lines = []
+		dots.each_with_index { |d, i|
+			dists = dots.map { |dd| d.dist(dd) }
+			dists_sorted = dists.sort
+			n_neigh.times { |ii|
+				i2 = dists.index(dists_sorted[1+ii])
+				lines << [i, i2]
+			}
+		}
+		lines.delete_if { |i1, i2| i1 > i2 and lines.index([i2, i1]) }
+		new(attr, dots, lines)
+	end
 end
 
 class Camera3D
 	attr_accessor :pos, :lookv, :upv, :screen_dist, :clip_dist
-	def initialize(pos=Point3D.new(0, 0, 3), lookv=Point3D.new(0, 0, -1), upv=Point3D.new(0, 1, 0), screen_dist=2.0, clip_dist=1.0)
+	def initialize(pos=Point3D.new(0, 0, 3), lookv=Point3D.new(0, 0, -1), upv=Point3D.new(0, 1, 0), screen_dist=2.0, clip_dist=0.1)
 		# position
 		@pos = pos
 		# look (front) vector
