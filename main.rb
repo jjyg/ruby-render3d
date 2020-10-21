@@ -1,7 +1,7 @@
 require 'gosu'
-require './mesh3d'
+require File.expand_path('../scene3d', __FILE__)
 
-class Cube3DWindow < Gosu::Window
+class Explorer3D < Gosu::Window
 	def initialize
 		@win_size = [640, 480]
 		super(*@win_size)
@@ -10,7 +10,7 @@ class Cube3DWindow < Gosu::Window
 		@cube_rot_z = 0.0
 		@cam = Camera3D.new
 		@start_time = Gosu.milliseconds
-		self.caption = "Cube 3D"
+		self.caption = "Explorer 3D"
 		@cube = Mesh3D.cube(:color => Gosu::Color::WHITE).scale(0.5)
 		@keys = {}
 	end
@@ -85,8 +85,10 @@ class Cube3DWindow < Gosu::Window
 				@cam = Camera3D.new
 
 			else
-				id_to_name = Gosu.constants.find { |_k| Gosu.const_get(_k) == k }
-				puts "unk key #{id_to_name || k}"
+				if $VERBOSE
+					id_to_name = Gosu.constants.find { |_k| Gosu.const_get(_k) == k }
+					puts "unk key #{id_to_name || k}"
+				end
 
 				@keys.delete(k)
 				next
@@ -96,4 +98,6 @@ class Cube3DWindow < Gosu::Window
 	end
 end
 
-Cube3DWindow.new.show
+if __FILE__ == $0
+	Explorer3D.new.show
+end
